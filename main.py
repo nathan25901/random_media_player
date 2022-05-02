@@ -1,8 +1,11 @@
 import sys
 import os
+import PyQt6.QtCore
+from win32api import GetSystemMetrics
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPixmap
+from random import shuffle
 
 import globals
 
@@ -51,33 +54,32 @@ class SubWindow(QScrollArea):
         dlg = QFileDialog()
         globals.active_folder_path = dlg.getExistingDirectory(self)
 
+        temp_active_files = []
+
         for path in os.listdir(globals.active_folder_path):
             full_path = os.path.join(globals.active_folder_path, path)
-            globals.active_files.append(full_path)
-            # if os.path.isfile(full_path):
+            temp_active_files.append(full_path)
 
-
-        # for (dirpath, dirnames, filenames) in walk(globals.active_folder_path):
-        #     for file in filenames:
-        #         globals.active_files.append(abspath(file))
-        #
-        #     for dir in dirnames:
-        #         globals.active_sub_dirs.append(abspath(dir))
-
+        shuffle(temp_active_files)
+        print(temp_active_files)
+        globals.active_files = temp_active_files
 
     def next_file(self):
-
-        print(globals.active_files)
-        print(globals.active_files_index)
-
         if globals.active_files_index >= len(globals.active_files):
             globals.active_files_index = 0
 
-        new_pixmap = QPixmap(globals.active_files[globals.active_files_index])
+        new_pixmap = QPixmap()
+
+        while new_pixmap.isNull():
+            new_pixmap = QPixmap(globals.active_files[globals.active_files_index])
+            globals.active_files_index = globals.active_files_index + 1
+
+        width, height = self.get_monitor_resolution()
+        new_pixmap = new_pixmap.scaled(height-500, width-50, PyQt6.QtCore.Qt.AspectRatioMode.KeepAspectRatio)
         self.active_image_pixmap.setPixmap(new_pixmap)
 
-        globals.active_files_index = globals.active_files_index + 1
-
+    def get_monitor_resolution(self):
+        return int(GetSystemMetrics(0)), int(GetSystemMetrics(1))
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
